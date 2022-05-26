@@ -44,9 +44,9 @@ def TransformToBasis(x, basis):
     return np.inner(x, basis)
 
 def ComputeColumns(i, xb, sigmas, K, z, tree3d):
-    ids = tree3d.query_ball_point(np.array([xb[i,0], xb[i,1], 0.]), K)
-    upper = z[ids] > z[i]
-    lower = np.invert(upper)
+    ids = tree3d.query_ball_point(np.array([xb[i,0], xb[i,1], 0.]), K) # particles within distance K in the fake 3D space will be within their actual radius in the 2D space
+    upper = z[ids] > z[i] # stuff in front
+    lower = np.invert(upper) # stuff behind
     sigmas_i = sigmas[ids]
     return sigmas_i[upper].sum(), sigmas_i[lower].sum()
 
@@ -65,11 +65,11 @@ def ColumnsAlongAxis(m, x, rho, axis=np.array([0,0,1.])):
     #x2d = xb[:,:2]
     z = xb[:,2]
 
-    K = r_eff.max() * (1+1e-6)
-    w = np.sqrt(K**2 - r_eff**2)
+    K = r_eff.max() * (1+1e-6) # largest possible particle radius
+    w = np.sqrt(K**2 - r_eff**2) # this is the fake z coordinate in the 3D space we're embedding the tree in
 
-    x3d = np.c_[xb[:,0],xb[:,1],w]
-    tree3d = cKDTree(x3d, leafsize=64)
+    x3d = np.c_[xb[:,0],xb[:,1],w] # construct the fake 3D coordinates
+    tree3d = cKDTree(x3d, leafsize=64) # construct the fake 3D tree
 
     columns = np.array([ComputeColumns(i,xb, sigmas, K, z, tree3d) for i in range(len(xb))])
     return columns
